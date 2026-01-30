@@ -21,7 +21,7 @@ export default function Sidebar() {
         <aside className={styles.sidebar}>
             <div className={styles.logoContainer}>
                 <Image
-                    src="/assets/aitu-logo.png"
+                    src="/assets/logo-aitu.png"
                     alt="Astana IT University"
                     width={190}
                     height={50}

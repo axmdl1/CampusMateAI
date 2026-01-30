@@ -22,7 +22,7 @@ export default function LoginPage() {
       <div className={styles.loginCard}>
         <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
           <Image
-            src="/assets/aitu-logo.png"
+            src="/assets/logo-aitu.png"
             alt="Astana IT University"
             width={200}
             height={200}

@@ -20,12 +20,12 @@ export default function LoginPage() {
   return (
     <main className={styles.container}>
       <div className={styles.loginCard}>
-        <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           <Image
             src="/assets/logo-aitu.png"
             alt="Astana IT University"
-            width={200}
-            height={200}
+            width={160}
+            height={160}
             style={{ objectFit: 'contain' }}
             priority
           />

@@ -2,12 +2,15 @@
 
 import React from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ChevronRight, Calendar, CheckSquare, FileText } from 'lucide-react';
 import styles from './page.module.css';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 
 export default function DashboardHome() {
+    const router = useRouter();
+
     return (
         <div>
             <div className={styles.headerSection}>
@@ -39,7 +42,13 @@ export default function DashboardHome() {
                         </div>
                     </div>
 
-                    <Button variant="primary" style={{ marginTop: 10 }}>View calendar</Button>
+                    <Button
+                        variant="primary"
+                        style={{ marginTop: 10, width: '100%' }}
+                        onClick={() => router.push('/dashboard/calendar')}
+                    >
+                        View calendar
+                    </Button>
                 </Card>
 
                 {/* Upcoming Deadlines Card */}
@@ -80,11 +89,19 @@ export default function DashboardHome() {
                     <h3 className={styles.cardTitle}>Quizzes Overview</h3>
 
                     <div className={styles.chartContainer}>
-                        {/* Simple CSS Circle or SVG for Pie Chart */}
                         <svg width="140" height="140" viewBox="0 0 100 100">
                             <circle cx="50" cy="50" r="40" stroke="#F4F7FE" strokeWidth="10" fill="none" />
-                            <circle cx="50" cy="50" r="40" stroke="#4318FF" strokeWidth="10" fill="none" strokeDasharray="60 251" transform="rotate(-90 50 50)" strokeLinecap="round" />
-                            {/* 5/25 approx 20% */}
+                            <circle
+                                cx="50"
+                                cy="50"
+                                r="40"
+                                stroke="#4318FF"
+                                strokeWidth="10"
+                                fill="none"
+                                strokeDasharray="60 251"
+                                transform="rotate(-90 50 50)"
+                                strokeLinecap="round"
+                            />
                         </svg>
                         <div className={styles.chartLabel}>
                             <div className={styles.chartNumber}>5 / 25</div>
@@ -100,7 +117,6 @@ export default function DashboardHome() {
 
             </div>
 
-            {/* Correcting the bottom section based on re-reading screenshot */}
             <div style={{ marginTop: 24 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                     <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid #6AD2FF' }}></div>
@@ -108,7 +124,6 @@ export default function DashboardHome() {
                 </div>
 
                 <Card style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 32 }}>
-                    {/* Brain Illustration */}
                     <div style={{ width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Image
                             src="/assets/greeting-brain.png"

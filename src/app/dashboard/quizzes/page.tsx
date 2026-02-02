@@ -2,12 +2,17 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import React from 'react';
-import { Upload, Sparkles, FileQuestion, ChevronRight, Cloud } from 'lucide-react'; // Added icons
+import React, { useState, useRef } from 'react'; // Добавили useState и useRef
+import { Upload, Sparkles, FileQuestion, ChevronRight, Cloud, FileText, X } from 'lucide-react';
 import styles from './page.module.css';
 import { Button } from '@/components/ui/Button';
 
 export default function QuizzesPage() {
+    // Состояние для хранения выбранного файла
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    // Реф для скрытого input
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const quizzes = [
         { id: 1, title: 'Data Structures Basics', course: 'Data Structures', status: 'Completed', score: '95%' },
         { id: 2, title: 'Linked Lists & Arrays', course: 'Data Structures', status: 'Pending', score: '-' },
@@ -15,6 +20,25 @@ export default function QuizzesPage() {
         { id: 4, title: 'React Fundamentals', course: 'Web Development', status: 'Completed', score: '88%' },
         { id: 5, title: 'Algorithm Complexity', course: 'Algorithms', status: 'Pending', score: '-' },
     ];
+
+    // Функция открытия окна выбора файла
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    // Функция обработки выбора файла
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+        }
+    };
+
+    // Удаление выбранного файла
+    const clearFile = () => {
+        setSelectedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     return (
         <div className={styles.container}>
@@ -64,13 +88,46 @@ export default function QuizzesPage() {
                     </p>
                 </div>
 
+                {/* --- СЕКЦИЯ С ВЫБРАННЫМ ФАЙЛОМ --- */}
+                {selectedFile && (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        marginBottom: 16,
+                        padding: '8px 16px',
+                        background: 'rgba(67, 24, 255, 0.05)',
+                        borderRadius: '12px',
+                        border: '1px dashed #4318FF',
+                        zIndex: 2
+                    }}>
+                        <FileText size={20} color="#4318FF" />
+                        <div style={{ flex: 1, textAlign: 'left' }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: '#1B2559' }}>{selectedFile.name}</div>
+                            <div style={{ fontSize: 12, color: '#A3AED0' }}>{(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type.split('/')[1]?.toUpperCase()}</div>
+                        </div>
+                        <button onClick={clearFile} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EE5D50' }}>
+                            <X size={18} />
+                        </button>
+                    </div>
+                )}
+
                 <div className={styles.aiActions}>
-                    <Button variant="secondary" className={styles.uploadBtn}>
+                    {/* Скрытый инпут */}
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                    />
+
+                    <Button variant="secondary" className={styles.uploadBtn} onClick={handleUploadClick}>
                         <Upload size={18} />
                         Add File
                     </Button>
 
-                    <Button variant="primary" className={styles.uploadBtn}>
+                    <Button variant="primary" className={styles.uploadBtn} disabled={!selectedFile}>
                         <Sparkles size={18} />
                         Explain
                     </Button>

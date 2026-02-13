@@ -2,16 +2,17 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import React, { useState, useRef } from 'react'; // Добавили useState и useRef
-import { Upload, Sparkles, FileQuestion, ChevronRight, Cloud, FileText, X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Upload, Sparkles, FileQuestion, ChevronRight, Cloud, FileText, X, Loader2 } from 'lucide-react';
 import styles from './page.module.css';
 import { Button } from '@/components/ui/Button';
 
 export default function QuizzesPage() {
-    // Состояние для хранения выбранного файла
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    // Реф для скрытого input
+    const [isProcessing, setIsProcessing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const router = useRouter();
 
     const quizzes = [
         { id: 1, title: 'Data Structures Basics', course: 'Data Structures', status: 'Completed', score: '95%' },
@@ -21,12 +22,10 @@ export default function QuizzesPage() {
         { id: 5, title: 'Algorithm Complexity', course: 'Algorithms', status: 'Pending', score: '-' },
     ];
 
-    // Функция открытия окна выбора файла
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
 
-    // Функция обработки выбора файла
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
@@ -34,10 +33,36 @@ export default function QuizzesPage() {
         }
     };
 
-    // Удаление выбранного файла
     const clearFile = () => {
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleGenerate = async (type: 'explain' | 'quiz') => {
+        if (!selectedFile) return;
+
+        setIsProcessing(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const res = await fetch('/api/quizzes/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.details || errorData.error || 'Failed to process file');
+            }
+
+            // Navigate to results page
+            router.push(`/dashboard/quizzes/result?type=${type}`);
+        } catch (error: any) {
+            console.error('Error processing file:', error);
+            alert(`Error: ${error.message || 'Failed to process file'}`);
+            setIsProcessing(false);
+        }
     };
 
     return (
@@ -88,7 +113,7 @@ export default function QuizzesPage() {
                     </p>
                 </div>
 
-                {/* --- СЕКЦИЯ С ВЫБРАННЫМ ФАЙЛОМ --- */}
+                {/* Selected File Display */}
                 {selectedFile && (
                     <div style={{
                         display: 'flex',
@@ -99,46 +124,59 @@ export default function QuizzesPage() {
                         background: 'rgba(67, 24, 255, 0.05)',
                         borderRadius: '12px',
                         border: '1px dashed #4318FF',
-                        zIndex: 2
+                        zIndex: 2,
+                        position: 'relative'
                     }}>
                         <FileText size={20} color="#4318FF" />
                         <div style={{ flex: 1, textAlign: 'left' }}>
                             <div style={{ fontSize: 14, fontWeight: 600, color: '#1B2559' }}>{selectedFile.name}</div>
-                            <div style={{ fontSize: 12, color: '#A3AED0' }}>{(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type.split('/')[1]?.toUpperCase()}</div>
+                            <div style={{ fontSize: 12, color: '#A3AED0' }}>{(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type.split('/')[1]?.toUpperCase() || 'FILE'}</div>
                         </div>
-                        <button onClick={clearFile} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EE5D50' }}>
+                        <button onClick={clearFile} disabled={isProcessing} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#EE5D50' }}>
                             <X size={18} />
                         </button>
                     </div>
                 )}
 
                 <div className={styles.aiActions}>
-                    {/* Скрытый инпут */}
                     <input
                         type="file"
                         ref={fileInputRef}
                         style={{ display: 'none' }}
                         onChange={handleFileChange}
-                        accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                        accept=".pdf,.doc,.docx,.xlsx,.txt,.md"
                     />
 
-                    <Button variant="secondary" className={styles.uploadBtn} onClick={handleUploadClick}>
+                    <Button variant="secondary" className={styles.uploadBtn} onClick={handleUploadClick} disabled={isProcessing}>
                         <Upload size={18} />
                         Add File
                     </Button>
 
-                    <Button variant="primary" className={styles.uploadBtn} disabled={!selectedFile}>
-                        <Sparkles size={18} />
+                    <Button
+                        variant="primary"
+                        className={styles.uploadBtn}
+                        onClick={() => handleGenerate('explain')}
+                        disabled={!selectedFile || isProcessing}
+                    >
+                        {isProcessing ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
                         Explain
                     </Button>
 
-                    <Button variant="primary" className={styles.uploadBtn} style={{ background: '#FFB547', color: '#1B2559' }}>
-                        <Image
-                            src="/assets/quiz-icon.png"
-                            alt="Icon"
-                            width={20}
-                            height={20}
-                        />
+                    <Button
+                        variant="primary"
+                        className={styles.uploadBtn}
+                        style={{ background: '#FFB547', color: '#1B2559' }}
+                        onClick={() => handleGenerate('quiz')}
+                        disabled={!selectedFile || isProcessing}
+                    >
+                        {isProcessing ? <Loader2 className="animate-spin" size={18} /> : (
+                            <Image
+                                src="/assets/quiz-icon.png"
+                                alt="Icon"
+                                width={20}
+                                height={20}
+                            />
+                        )}
                         Make Quiz
                     </Button>
                 </div>

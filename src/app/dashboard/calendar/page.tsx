@@ -21,6 +21,7 @@ import { Card } from '@/components/ui/Card';
 
 export default function CalendarPage() {
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [activeFilter, setActiveFilter] = useState<'all' | 'labs' | 'assign' | 'exam'>('all');
 
     const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
     const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -44,13 +45,23 @@ export default function CalendarPage() {
     // In a real app, you'd fetch these
     const getEventsForDay = (date: Date) => {
         const day = date.getDate();
+        let events = [];
+
         // deterministic mock events based on day number to populate grid
-        if (day === 20) return [{ title: 'Databases Assignm.', type: 'assign' }];
-        if (day === 10) return [{ title: 'Data Structures', type: 'labs' }];
-        if (day === 18) return [{ title: 'Software Arch.', type: 'assign' }];
-        if (day === 19) return [{ title: 'DB Exam', type: 'exam' }];
-        if (day === 22) return [{ title: 'DB Exam', type: 'exam' }];
-        return [];
+        if (day === 20) events.push({ title: 'Databases Assignm.', type: 'assign' });
+        if (day === 10) events.push({ title: 'Data Structures', type: 'labs' });
+        if (day === 18) events.push({ title: 'Software Arch.', type: 'assign' });
+        if (day === 19) events.push({ title: 'DB Exam', type: 'exam' });
+        if (day === 22) events.push({ title: 'DB Exam', type: 'exam' });
+
+        if (activeFilter !== 'all') {
+            return events.filter(e => e.type === activeFilter);
+        }
+        return events;
+    };
+
+    const toggleFilter = (filter: 'labs' | 'assign' | 'exam') => {
+        setActiveFilter(prev => prev === filter ? 'all' : filter);
     };
 
     return (
@@ -73,13 +84,25 @@ export default function CalendarPage() {
                 </div>
 
                 <div className={styles.filterSection}>
-                    <div className={`${styles.filterChip} ${styles.labs}`}>
+                    <div
+                        className={`${styles.filterChip} ${styles.labs}`}
+                        style={{ opacity: activeFilter === 'all' || activeFilter === 'labs' ? 1 : 0.4, cursor: 'pointer' }}
+                        onClick={() => toggleFilter('labs')}
+                    >
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor' }}></span> Labs
                     </div>
-                    <div className={`${styles.filterChip} ${styles.assignments}`}>
+                    <div
+                        className={`${styles.filterChip} ${styles.assignments}`}
+                        style={{ opacity: activeFilter === 'all' || activeFilter === 'assign' ? 1 : 0.4, cursor: 'pointer' }}
+                        onClick={() => toggleFilter('assign')}
+                    >
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor' }}></span> Assignments
                     </div>
-                    <div className={`${styles.filterChip} ${styles.exams}`}>
+                    <div
+                        className={`${styles.filterChip} ${styles.exams}`}
+                        style={{ opacity: activeFilter === 'all' || activeFilter === 'exam' ? 1 : 0.4, cursor: 'pointer' }}
+                        onClick={() => toggleFilter('exam')}
+                    >
                         <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'currentColor' }}></span> Exams
                     </div>
                 </div>
@@ -104,7 +127,7 @@ export default function CalendarPage() {
 
                                     {isCurrentMonth && events.map((ev, i) => (
                                         <div key={i} className={`${styles.eventChip} ${ev.type === 'labs' ? styles.eventLabs :
-                                                ev.type === 'assign' ? styles.eventAssign : styles.eventExam
+                                            ev.type === 'assign' ? styles.eventAssign : styles.eventExam
                                             }`}>
                                             {ev.title}
                                         </div>

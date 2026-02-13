@@ -59,7 +59,13 @@ export default function LoginPage() {
             placeholder="Enter your password"
             icon={<Lock size={18} />}
           />
-          <div className={styles.forgotPassword}>Forgot password?</div>
+          <div
+            className={styles.forgotPassword}
+            onClick={() => alert("Password reset functionality coming soon!")}
+            style={{ cursor: 'pointer' }}
+          >
+            Forgot password?
+          </div>
 
           <Button type="submit" variant="primary">Continue</Button>
         </form>
@@ -77,13 +83,13 @@ export default function LoginPage() {
         {/* Footer */}
         <div className={styles.footer}>
           <div className={styles.footerLinks}>
-            <Link href="#">About</Link>
+            <span onClick={() => alert("About page coming soon!")} style={{ cursor: 'pointer' }}>About</span>
             <span>|</span>
-            <Link href="#">Privacy</Link>
+            <span onClick={() => alert("Privacy Policy coming soon!")} style={{ cursor: 'pointer' }}>Privacy</span>
             <span>|</span>
-            <Link href="#">Terms</Link>
+            <span onClick={() => alert("Terms of Service coming soon!")} style={{ cursor: 'pointer' }}>Terms</span>
             <span>|</span>
-            <Link href="#">Support</Link>
+            <span onClick={() => alert("Support page coming soon!")} style={{ cursor: 'pointer' }}>Support</span>
           </div>
         </div>
       </div>

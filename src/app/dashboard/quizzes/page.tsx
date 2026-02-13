@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 export default function QuizzesPage() {
     // Состояние для хранения выбранного файла
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     // Реф для скрытого input
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +33,7 @@ export default function QuizzesPage() {
         const file = event.target.files?.[0];
         if (file) {
             setSelectedFile(file);
+            // alert(`File "${file.name}" ready for analysis.`);
         }
     };
 
@@ -38,6 +41,23 @@ export default function QuizzesPage() {
     const clearFile = () => {
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleExplain = () => {
+        if (!selectedFile) return;
+        setIsAnalyzing(true);
+        setTimeout(() => {
+            setIsAnalyzing(false);
+            alert("✨ AI Analysis:\n\nBased on your file, this problem focuses on optimizations. The time complexity appears to be O(n^2), but can be improved to O(n) using a hash map.");
+        }, 1500);
+    };
+
+    const handleMakeQuiz = () => {
+        setIsGenerating(true);
+        setTimeout(() => {
+            setIsGenerating(false);
+            alert("📚 Quiz Generated!\n\nA new 10-question quiz has been created from your material. Check your 'Pending' quizzes.");
+        }, 1500);
     };
 
     return (
@@ -49,7 +69,12 @@ export default function QuizzesPage() {
 
             <div className={styles.quizList}>
                 {quizzes.map((quiz) => (
-                    <div key={quiz.id} className={styles.quizItem}>
+                    <div
+                        key={quiz.id}
+                        className={styles.quizItem}
+                        onClick={() => alert(`Opening details for: ${quiz.title}`)}
+                        style={{ cursor: 'pointer' }}
+                    >
                         <div className={styles.quizInfo}>
                             <div
                                 className={styles.quizIcon}
@@ -127,19 +152,30 @@ export default function QuizzesPage() {
                         Add File
                     </Button>
 
-                    <Button variant="primary" className={styles.uploadBtn} disabled={!selectedFile}>
+                    <Button
+                        variant="primary"
+                        className={styles.uploadBtn}
+                        disabled={!selectedFile || isAnalyzing}
+                        onClick={handleExplain}
+                    >
                         <Sparkles size={18} />
-                        Explain
+                        {isAnalyzing ? 'Analyzing...' : 'Explain'}
                     </Button>
 
-                    <Button variant="primary" className={styles.uploadBtn} style={{ background: '#FFB547', color: '#1B2559' }}>
+                    <Button
+                        variant="primary"
+                        className={styles.uploadBtn}
+                        style={{ background: '#FFB547', color: '#1B2559' }}
+                        onClick={handleMakeQuiz}
+                        disabled={isGenerating}
+                    >
                         <Image
                             src="/assets/quiz-icon.png"
                             alt="Icon"
                             width={20}
                             height={20}
                         />
-                        Make Quiz
+                        {isGenerating ? 'Generating...' : 'Make Quiz'}
                     </Button>
                 </div>
             </div>

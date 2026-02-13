@@ -24,7 +24,11 @@ export default function DashboardHome() {
                 <Card>
                     <h3 className={styles.cardTitle}>Study Plan</h3>
 
-                    <div className={styles.studySection}>
+                    <div
+                        className={styles.studySection}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => router.push('/dashboard/quizzes')} // Mock nav to detailed view
+                    >
                         <p className={styles.subLabel}>Today's focus</p>
                         <div className={styles.courseCard}>
                             <CheckSquare size={18} color="#FFB547" />
@@ -33,7 +37,11 @@ export default function DashboardHome() {
                         </div>
                     </div>
 
-                    <div className={styles.studySection}>
+                    <div
+                        className={styles.studySection}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => router.push('/dashboard/calendar')}
+                    >
                         <p className={styles.subLabel}>Next exam</p>
                         <div className={`${styles.courseCard} ${styles.blue}`}>
                             <FileText size={18} color="#4318FF" />
@@ -80,12 +88,17 @@ export default function DashboardHome() {
                     </div>
 
                     <div className={styles.seeAll}>
-                        <Button variant="ghost">See all <ChevronRight size={16} /></Button>
+                        <Button variant="ghost" onClick={() => router.push('/dashboard/calendar')}>
+                            See all <ChevronRight size={16} />
+                        </Button>
                     </div>
                 </Card>
 
                 {/* Quizzes Overview Card */}
-                <Card>
+                <Card
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => router.push('/dashboard/quizzes')}
+                >
                     <h3 className={styles.cardTitle}>Quizzes Overview</h3>
 
                     <div className={styles.chartContainer}>

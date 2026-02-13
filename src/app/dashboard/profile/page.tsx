@@ -41,7 +41,7 @@ export default function ProfilePage() {
                                 <div className={styles.onlineStatus}></div>
                             </div>
                             <h3 className={styles.userName}>Alex Johnson</h3>
-                            <p className={styles.userRole}>Computer Science, Year 3</p>
+                            <p className={styles.userRole}>Software Engineering, Year 3</p>
                             <p className={styles.userId}>ID: 210987</p>
                         </div>
 
@@ -95,7 +95,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className={styles.detailContent}>
                                     <span className={styles.detailLabel}>Group</span>
-                                    <span className={styles.detailValue}>SE-2104</span>
+                                    <span className={styles.detailValue}>SE-2309</span>
                                 </div>
                             </div>
 

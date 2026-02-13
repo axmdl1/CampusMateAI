@@ -1,15 +1,48 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { Mail, Phone, MapPin, BookOpen, Layers, Award, LogOut } from 'lucide-react';
+import { Mail, Phone, MapPin, BookOpen, Layers, Award, LogOut, Loader2 } from 'lucide-react';
 import styles from './page.module.css';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
 
+interface UserProfile {
+    name: string;
+    email: string;
+    role: string;
+    major?: string;
+    group?: string;
+    gpa?: string;
+    //  avatar?: string; // Future: Support avatar URL
+}
+
 export default function ProfilePage() {
     const router = useRouter();
+    const [user, setUser] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    setUser(data.user);
+                } else {
+                    // If unauthorized, maybe redirect or just show empty
+                    console.error('Failed to fetch profile');
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProfile();
+    }, []);
 
     const handleLogout = () => {
         const confirmLogout = window.confirm("Are you sure you want to log out?");
@@ -17,6 +50,27 @@ export default function ProfilePage() {
             router.push('/');
         }
     };
+
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#4318FF' }}>
+                <Loader2 size={40} className="animate-spin" />
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className={styles.container}>
+                <div style={{ textAlign: 'center', marginTop: 100 }}>
+                    <h3>Please log in to view your profile.</h3>
+                    <Button variant="primary" onClick={() => router.push('/')} style={{ marginTop: 20 }}>
+                        Go to Login
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>
@@ -32,7 +86,7 @@ export default function ProfilePage() {
                         <div className={styles.avatarSection}>
                             <div className={styles.avatarWrapper}>
                                 <Image
-                                    src="https://i.pravatar.cc/300?img=12"
+                                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4318FF&color=fff&size=120`}
                                     alt="Profile Picture"
                                     width={120}
                                     height={120}
@@ -40,19 +94,19 @@ export default function ProfilePage() {
                                 />
                                 <div className={styles.onlineStatus}></div>
                             </div>
-                            <h3 className={styles.userName}>Alex Johnson</h3>
-                            <p className={styles.userRole}>Software Engineering, Year 3</p>
-                            <p className={styles.userId}>ID: 210987</p>
+                            <h3 className={styles.userName}>{user.name}</h3>
+                            <p className={styles.userRole}>Student</p>
+                            <p className={styles.userId}>ID: {Math.floor(Math.random() * 900000) + 100000}</p>
                         </div>
 
                         <div className={styles.infoList}>
                             <div className={styles.infoItem}>
                                 <Mail size={18} className={styles.icon} />
-                                <span>alex.johnson@example.com</span>
+                                <span>{user.email}</span>
                             </div>
                             <div className={styles.infoItem}>
                                 <Phone size={18} className={styles.icon} />
-                                <span>+7 (777) 123-45-67</span>
+                                <span>+7 (777) 000-00-00</span>
                             </div>
                             <div className={styles.infoItem}>
                                 <MapPin size={18} className={styles.icon} />
@@ -85,7 +139,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className={styles.detailContent}>
                                     <span className={styles.detailLabel}>Major</span>
-                                    <span className={styles.detailValue}>Software Engineering</span>
+                                    <span className={styles.detailValue}>{user.major || 'Computer Science'}</span>
                                 </div>
                             </div>
 
@@ -95,7 +149,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className={styles.detailContent}>
                                     <span className={styles.detailLabel}>Group</span>
-                                    <span className={styles.detailValue}>SE-2309</span>
+                                    <span className={styles.detailValue}>{user.group || 'CS-101'}</span>
                                 </div>
                             </div>
 
@@ -105,7 +159,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className={styles.detailContent}>
                                     <span className={styles.detailLabel}>GPA</span>
-                                    <span className={styles.detailValue}>3.85 / 4.0</span>
+                                    <span className={styles.detailValue}>{user.gpa || '3.50'}</span>
                                 </div>
                             </div>
                         </div>

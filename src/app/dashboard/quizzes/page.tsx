@@ -88,7 +88,7 @@ export default function QuizzesPage() {
                                 <FileQuestion size={20} />
                             </div>
                             <div className={styles.quizDetails}>
-                                h4&gt;{quiz.title}&lt;/h4&gt;
+                                <h4>{quiz.title}</h4>
                                 <p>{quiz.course}</p>
                             </div>
                         </div>

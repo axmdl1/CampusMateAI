@@ -1,42 +1,72 @@
-// This is a mock implementation of RAG (Retrieval-Augmented Generation)
-// In a real application, this would use a vector database like Pinecone, Weaviate, or Chroma.
+// RAG (Retrieval-Augmented Generation) - document processing and text extraction
 
 export interface Chunk {
     id: string;
     text: string;
-    metadata: any;
+    metadata: Record<string, unknown>;
 }
 
 const mockStore: Chunk[] = [];
 
-export async function processDocument(file: File): Promise<string> {
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+/** Extract text from uploaded file (txt, md, PDF) */
+export async function extractTextFromFile(file: File): Promise<string> {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
 
-    // Mock chunking
-    const text = "This is a mock document content derived from the uploaded file. In a real system, the file would be parsed (PDF/Docx) and split into chunks embedded into a vector store.";
+    if (ext === 'txt' || ext === 'md') {
+        return await file.text();
+    }
 
-    mockStore.push({
-        id: Date.now().toString(),
-        text,
-        metadata: { filename: file.name }
-    });
+    if (ext === 'pdf') {
+        const { extractText } = await import('unpdf');
+        const arrayBuffer = await file.arrayBuffer();
+        const { text } = await extractText(new Uint8Array(arrayBuffer), { mergePages: true });
+        return text || '';
+    }
 
-    return "mock-session-id";
+    // doc, docx, xlsx - not fully supported
+    if (ext === 'doc' || ext === 'docx' || ext === 'xlsx') {
+        throw new Error(`File type .${ext} is not fully supported. Please use .txt, .md, or .pdf for best results.`);
+    }
+
+    return await file.text();
 }
 
-export function clearVectorStore() {
-    // mockStore.length = 0; // functional no-op for now to keep history in this mock session
-}
+export async function processDocument(file: File): Promise<{ sessionId: string; extractedText: string }> {
+    const text = await extractTextFromFile(file);
+    const cleanedText = text.trim() || 'No readable content found in the document.';
 
-export async function retrieveRelevantChunks(query: string, limit: number = 3): Promise<Chunk[]> {
-    // Return all mock chunks for now, or a generic one if empty
+    // Store chunks for RAG (simple sentence-based chunking)
+    const sentences = cleanedText
+        .split(/(?<=[.!?])\s+/)
+        .filter((s) => s.trim().length > 20);
+    const chunkSize = 3;
+    for (let i = 0; i < sentences.length; i += chunkSize) {
+        const chunkText = sentences.slice(i, i + chunkSize).join(' ');
+        mockStore.push({
+            id: `${Date.now()}-${i}`,
+            text: chunkText,
+            metadata: { filename: file.name, index: i },
+        });
+    }
+
     if (mockStore.length === 0) {
-        return [{
-            id: 'default',
-            text: "This is default context because no documents have been processed yet. The user asked about: " + query,
-            metadata: {}
-        }];
+        mockStore.push({
+            id: Date.now().toString(),
+            text: cleanedText,
+            metadata: { filename: file.name },
+        });
+    }
+
+    return { sessionId: 'session-' + Date.now(), extractedText: cleanedText };
+}
+
+export function clearVectorStore(): void {
+    mockStore.length = 0;
+}
+
+export async function retrieveRelevantChunks(query: string, limit = 5): Promise<Chunk[]> {
+    if (mockStore.length === 0) {
+        return [];
     }
     return mockStore.slice(0, limit);
 }

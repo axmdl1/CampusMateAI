@@ -51,12 +51,16 @@ export default function QuizzesPage() {
                 body: formData,
             });
 
+            const data = await res.json();
+
             if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.details || errorData.error || 'Failed to process file');
+                throw new Error(data.details || data.error || 'Failed to process file');
             }
 
-            // Navigate to results page
+            if (data.extractedText) {
+                sessionStorage.setItem('campusmate-document-text', data.extractedText);
+            }
+
             router.push(`/dashboard/quizzes/result?type=${type}`);
         } catch (error: any) {
             console.error('Error processing file:', error);

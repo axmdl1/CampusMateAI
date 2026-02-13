@@ -3,17 +3,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import styles from './AIChat.module.css';
+import styles from './DocumentChat.module.css';
 
 interface Message {
     role: 'user' | 'assistant';
     content: string;
 }
 
-export const AIChat = () => {
-    const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', content: 'Hello! I am your CampusMate AI Academic Assistant. How can I help you studying today?' }
-    ]);
+interface DocumentChatProps {
+    initialSummary: string;
+    documentText?: string | null;
+}
+
+export const DocumentChat = ({ initialSummary, documentText }: DocumentChatProps) => {
+    const [messages, setMessages] = useState<Message[]>(() =>
+        initialSummary.trim()
+            ? [{ role: 'assistant', content: initialSummary }]
+            : [{ role: 'assistant', content: 'No summary available. Please try again.' }]
+    );
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -31,29 +38,33 @@ export const AIChat = () => {
         if (!input.trim() || isLoading) return;
 
         const userMessage: Message = { role: 'user', content: input };
-        setMessages(prev => [...prev, userMessage]);
+        setMessages((prev) => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/ai/chat', {
+            const chatMessages = [...messages, userMessage].map((m) => ({
+                role: m.role,
+                content: m.content,
+            }));
+
+            const response = await fetch('/api/quizzes/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content }))
+                    messages: chatMessages,
+                    documentText: documentText || (typeof window !== 'undefined' ? sessionStorage.getItem('campusmate-document-text') : null) || undefined,
                 }),
             });
 
             if (!response.ok) throw new Error(response.statusText);
 
-            // Stream response
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
             let aiMessageContent = '';
 
             if (reader) {
-                // Add preliminary empty AI message
-                setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+                setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
 
                 while (true) {
                     const { done, value } = await reader.read();
@@ -62,17 +73,25 @@ export const AIChat = () => {
                     const text = decoder.decode(value);
                     aiMessageContent += text;
 
-                    // Update last message with new content
-                    setMessages(prev => {
+                    setMessages((prev) => {
                         const newMessages = [...prev];
-                        newMessages[newMessages.length - 1] = { role: 'assistant', content: aiMessageContent };
+                        newMessages[newMessages.length - 1] = {
+                            role: 'assistant',
+                            content: aiMessageContent,
+                        };
                         return newMessages;
                     });
                 }
             }
         } catch (error) {
-            console.error('Chat error:', error);
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again later.' }]);
+            console.error('Document chat error:', error);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: 'assistant',
+                    content: 'Sorry, I encountered an error. Please try again later.',
+                },
+            ]);
         } finally {
             setIsLoading(false);
         }
@@ -81,30 +100,33 @@ export const AIChat = () => {
     return (
         <div className={styles.container}>
             <div className={styles.header}>
-                <div style={{ background: '#E9E3FF', padding: 8, borderRadius: '50%', color: '#4318FF' }}>
+                <div className={styles.iconWrapper}>
                     <Bot size={20} />
                 </div>
                 <div>
-                    <div className={styles.title}>CampusMate AI</div>
-                    <div style={{ fontSize: 12, color: '#A3AED0' }}>Always here to help</div>
+                    <div className={styles.title}>Document Assistant</div>
+                    <div className={styles.subtitle}>Ask follow-up questions about the document</div>
                 </div>
-                <div style={{ marginLeft: 'auto' }} className={styles.statusIndicator}>
-                    Online
-                </div>
+                <div className={styles.statusIndicator}>Online</div>
             </div>
 
             <div className={styles.messagesArea}>
                 {messages.map((msg, index) => (
-                    <div key={index} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
-                        {msg.role === 'assistant' ? (
-                            <div className={styles.markdown}>
-                                <ReactMarkdown>
-                                    {msg.content?.trim() ? msg.content : 'No response received.'}
-                                </ReactMarkdown>
-                            </div>
-                        ) : (
-                            msg.content
-                        )}
+                    <div
+                        key={index}
+                        className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}
+                    >
+                        <div className={styles.messageContent}>
+                            {msg.role === 'assistant' ? (
+                                <div className={styles.markdown}>
+                                    <ReactMarkdown>
+                                        {msg.content?.trim() ? msg.content : 'No response received.'}
+                                    </ReactMarkdown>
+                                </div>
+                            ) : (
+                                msg.content
+                            )}
+                        </div>
                     </div>
                 ))}
                 {isLoading && messages[messages.length - 1]?.role === 'user' && (
@@ -123,12 +145,16 @@ export const AIChat = () => {
                 <input
                     type="text"
                     className={styles.input}
-                    placeholder="Ask about your studies..."
+                    placeholder="Ask about the document..."
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     disabled={isLoading}
                 />
-                <button type="submit" className={styles.sendButton} disabled={!input.trim() || isLoading}>
+                <button
+                    type="submit"
+                    className={styles.sendButton}
+                    disabled={!input.trim() || isLoading}
+                >
                     <Send size={20} />
                 </button>
             </form>

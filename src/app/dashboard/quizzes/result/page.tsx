@@ -14,8 +14,15 @@ function ResultContent() {
     const type = searchParams.get('type');
     const [summary, setSummary] = useState('');
     const [questions, setQuestions] = useState<Question[]>([]);
+    const [documentText, setDocumentText] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setDocumentText(sessionStorage.getItem('campusmate-document-text'));
+        }
+    }, []);
 
     useEffect(() => {
         if (!type) {
@@ -25,31 +32,31 @@ function ResultContent() {
 
         const fetchData = async () => {
             try {
+                const docText = typeof window !== 'undefined' ? sessionStorage.getItem('campusmate-document-text') : null;
+
                 const response = await fetch('/api/quizzes/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type }),
+                    body: JSON.stringify({ type, documentText: docText }),
                 });
 
                 if (!response.ok) throw new Error('Generation failed');
 
                 if (type === 'explain') {
-                    // For explanation, we handle one large stream
                     const reader = response.body?.getReader();
                     if (!reader) throw new Error('No body');
                     const decoder = new TextDecoder();
-                    let text = '';
-
-                    setIsLoading(false); // Can start showing Chat immediately if we want, but waiting for initial summary is safer for simpler state
+                    let fullText = '';
 
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
-                        text += decoder.decode(value, { stream: true });
-                        setSummary((prev) => prev + decoder.decode(value, { stream: true }));
+                        const chunk = decoder.decode(value, { stream: true });
+                        fullText += chunk;
+                        setSummary((prev) => prev + chunk);
                     }
-                    // Force final update to ensure state is sync
-                    setSummary(text);
+                    setSummary(fullText);
+                    setIsLoading(false);
 
                 } else if (type === 'quiz') {
                     // For quiz, we need to wait for the full stream to parse JSON
@@ -138,7 +145,12 @@ function ResultContent() {
 
                 {!isLoading && !error && (
                     <>
-                        {type === 'explain' && <DocumentChat initialSummary={summary} />}
+                        {type === 'explain' && (
+                            <DocumentChat
+                                initialSummary={summary}
+                                documentText={documentText}
+                            />
+                        )}
                         {type === 'quiz' && <QuizPlayer questions={questions} />}
                     </>
                 )}

@@ -7,6 +7,7 @@ import { ChevronRight, Calendar, CheckSquare, FileText } from 'lucide-react';
 import styles from './page.module.css';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { AIChat } from '@/components/AIChat';
 
 export default function DashboardHome() {
     const router = useRouter();
@@ -16,6 +17,11 @@ export default function DashboardHome() {
             <div className={styles.headerSection}>
                 <h2 className={styles.welcomeTitle}>Welcome back!</h2>
                 <p className={styles.welcomeSubtitle}>Here's a summary of your upcoming activities and important tasks.</p>
+            </div>
+
+            {/* AI Chat Layout - Desktop: Side by side with grid, Mobile: Stacked */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '24px' }}>
+                <AIChat />
             </div>
 
             <div className={styles.grid}>

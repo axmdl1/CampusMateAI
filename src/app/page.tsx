@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -12,9 +12,38 @@ import { Button } from '@/components/ui/Button';
 export default function LoginPage() {
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/dashboard');
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      router.push('/dashboard');
+      router.refresh(); // Refresh to update middleware state
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -47,17 +76,30 @@ export default function LoginPage() {
           <p className={styles.welcomeSubtitle}>Log in to continue to CampusMate AI.</p>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div style={{ color: 'red', fontSize: 14, marginBottom: 10, textAlign: 'center' }}>
+            {error}
+          </div>
+        )}
+
         {/* Login Form */}
         <form className={styles.form} onSubmit={handleLogin}>
           <Input
             type="email"
             placeholder="Email"
             icon={<Mail size={18} />}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
           <Input
             type="password"
             placeholder="Enter your password"
             icon={<Lock size={18} />}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
           <div
             className={styles.forgotPassword}
@@ -67,18 +109,19 @@ export default function LoginPage() {
             Forgot password?
           </div>
 
-          <Button type="submit" variant="primary">Continue</Button>
+          <Button type="submit" variant="primary" disabled={loading}>
+            {loading ? 'Logging in...' : 'Continue'}
+          </Button>
         </form>
 
         <div className={styles.orDivider}>OR</div>
 
         {/* Social Login */}
-        <Button variant="secondary" onClick={() => router.push('/dashboard')}>
-          <div className={styles.openidContent}>
-            <img src="https://lms.astanait.edu.kz/theme/image.php/classic/auth_oidc/1759344969/o365" alt="Office 365" width={20} height={20} />
-            <span>Sign in with OpenID Connect</span>
-          </div>
-        </Button>
+        <div className={styles.authActions}>
+          <Button variant="secondary" onClick={() => router.push('/register')} style={{ marginTop: '1rem', width: '100%' }}>
+            Create New Account
+          </Button>
+        </div>
 
         {/* Footer */}
         <div className={styles.footer}>
